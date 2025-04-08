@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html><html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Pesquisa de Satisfação - Te Atualizei</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #0077cc;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .pergunta {
+            margin-bottom: 15px;
+        }
+
+            .pergunta input[type="number"] {
+                width: 60px;
+            }
+
+        button {
+            padding: 10px 20px;
+            background-color: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pesquisa de Satisfação</h1>
+    <form id="formulario">
+        <div>
+            <label for="nome">Seu nome:</label><br>
+            <input type="text" id="nome" required>
+        </div>
+        <div id="perguntas"></div>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script>
+    const API_BASE = 'http://localhost:7288/api'; // ajuste a porta se for diferente
+
+    // Buscar perguntas da API
+    async function carregarPerguntas() {
+      const resposta = await fetch(`${API_BASE}/perguntas`);
+      const perguntas = await resposta.json();
+
+      const container = document.getElementById('perguntas');
+      perguntas.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'pergunta';
+        div.innerHTML = `
+          <label>${p.texto}</label><br>
+          <input type="number" name="pergunta-${p.id}" min="1" max="5" required>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Enviar respostas
+    document.getElementById('formulario').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const nome = document.getElementById('nome').value;
+      const inputs = document.querySelectorAll('#perguntas input');
+
+      const itens = Array.from(inputs).map(input => {
+        const perguntaId = parseInt(input.name.split('-')[1]);
+        const valor = parseInt(input.value);
+        return { perguntaId, valor };
+      });
+
+      const corpo = { nome, itens };
+
+      const resposta = await fetch(`${API_BASE}/respostas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpo)
+      });
+
+      if (resposta.ok) {
+        alert('Resposta enviada com sucesso!');
+        document.getElementById('formulario').reset();
+      } else {
+        alert('Erro ao enviar resposta.');
+      }
+    });
+
+    carregarPerguntas();
+    </script>
+</body>
+</html>
